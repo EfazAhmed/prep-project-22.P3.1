@@ -1,39 +1,54 @@
 import { useEffect, useState } from 'react';
 
-function Alert({ city, isLoaded, results, cityCoordinates }) {
+function Alert({ city, isLoaded, cityCoordinates }) {
  
     const [alert, setAlert] = useState(null)
 
     useEffect(() => {
-        if(isLoaded && cityCoordinates !== null && cityCoordinates !== undefined) {
-            const country = results?.sys.country
-            if(country === 'US') {
-                const url = `https://api.weather.gov/alerts/active?status=actual&message_type=alert&point=${cityCoordinates.lat}%2C${cityCoordinates.lon}`
-                fetch(url)
-                .then((res) => res.json())
-                .then(
-                    (result) => {
-                        let title = result?.features[0]?.properties?.parameters?.NWSheadline[0]
-                        title = title.toLowerCase().split(' ')
-                        title.forEach((word, index) => {
-                            if(word.length > 1) {
-                                title[index] = word.slice(0,1).toUpperCase() + word.slice(1)
-                            }
-                        });
-                        title = title.join(' ')
-                        const desc = result?.features[0]?.properties.description
-                        console.log(desc)
-                        setAlert({title: title, description: desc})      
-                    }, 
-                    (error) => {
-                        console.log(error)
+        if(isLoaded && cityCoordinates) {
+            const url = `https://api.openweathermap.org/data/2.5/onecall?lat=${cityCoordinates.lat}&lon=${cityCoordinates.lon}&exclude=&appid=${process.env.REACT_APP_APIKEY}`
+            fetch(url)
+            .then((res) => res.json())
+            .then(
+                (result) => {
+                    if(result.alerts) {
+                        const title = result.alerts[0]?.event
+                        let description = result.alerts[0]?.description
+                        if(description.includes('WHAT') && description.includes('WHERE') && description.includes('WHEN')) {
+                            description = description.trim()
+                            const sentences = description.split('*')
+                            console.log(sentences)
+                            sentences.forEach((word, index) => {
+                                const start = word.indexOf('...') + 3
+                                let newWord = word.slice(start)
+                                newWord = newWord.trim()
+                                newWord = newWord.replaceAll('\n', ' ')
+                                newWord = newWord.replaceAll('...', '')
+                                if(newWord.slice(-1) !== '.') {
+                                    newWord += '.'
+                                } 
+                                sentences[index] = newWord
+                            });
+                            description = sentences.join(' ')
+                        } else {
+                            description = description.trim()
+                            let sentences = description.split(' ')
+                            sentences.forEach((word, index) => {
+                                const newWord = word.trim()
+                                sentences[index] = newWord
+                            })
+                            sentences = sentences.filter(word => word)
+                        }
+                        setAlert({title: title, description: description})   
+                    } else {
+                        setAlert(null)
                     }
-                )
-            } else {
-                console.log('INTERNATIONAL')
-            }
+                }
+            )
         }
-    }, [city, isLoaded, results, cityCoordinates]);
+
+       
+    }, [city, isLoaded, cityCoordinates]);
 
   return (
       <>
@@ -55,9 +70,16 @@ function Alert({ city, isLoaded, results, cityCoordinates }) {
                 )}
             </>
         )}
-      </>
-  );
+        {isLoaded && !alert && (
+            <>
+                <p>
+                    No Weather Alerts Available
+                </p>
+            </>
+        )}
 
+      </>
+  );  
 }
 
 export default Alert;

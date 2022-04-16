@@ -39,6 +39,7 @@ function App() {
       );
   }, [city]);
 
+
   if (error) {
     return <div>Error: {error.message}</div>;
   }
@@ -98,7 +99,7 @@ function App() {
             </div>
             <div className="Map">
               <h2>Map goes here.</h2>
-              <Alert city={ city } isLoaded={ isLoaded } results={ results } cityCoordinates={ cityCoordinates } APIKEY={process.env.REACT_APP_APIKEY} />
+              <Alert city={ city } isLoaded={ isLoaded } cityCoordinates={ cityCoordinates } />
             </div>
           </>
         )}
