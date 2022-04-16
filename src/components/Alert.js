@@ -1,87 +1,58 @@
 import { useEffect, useState } from 'react';
-import { MAX_RESULTS } from 'react-search-autocomplete/dist/components/ReactSearchAutocomplete';
 
-function Alert({ city, isLoaded, results, cityCoordinates, APIKEY}) {
+function Alert({ city, isLoaded, results, cityCoordinates }) {
  
     const [alert, setAlert] = useState(null)
 
     useEffect(() => {
         if(isLoaded && cityCoordinates !== null && cityCoordinates !== undefined) {
-            const alertUrl = `https://api.openweathermap.org/data/2.5/onecall?lat=${cityCoordinates.lat}&lon=${cityCoordinates.lon}&exclude=&appid=${process.env.REACT_APP_APIKEY}`
-            fetch(alertUrl)
-            .then((res) => res.json())
-            .then(
-                (result) => {
-                    console.log(result)
-                    if(result.alerts) {
-                        const title = result.alerts[0].event
-                        const info = result.alerts[0].description
-                        setAlert({title: title, info: info})
+            const country = results?.sys.country
+            if(country === 'US') {
+                const url = `https://api.weather.gov/alerts/active?status=actual&message_type=alert&point=${cityCoordinates.lat}%2C${cityCoordinates.lon}`
+                fetch(url)
+                .then((res) => res.json())
+                .then(
+                    (result) => {
+                        let title = result?.features[0]?.properties?.parameters?.NWSheadline[0]
+                        title = title.toLowerCase().split(' ')
+                        title.forEach((word, index) => {
+                            if(word.length > 1) {
+                                title[index] = word.slice(0,1).toUpperCase() + word.slice(1)
+                            }
+                        });
+                        title = title.join(' ')
+                        const desc = result?.features[0]?.properties.description
+                        console.log(desc)
+                        setAlert({title: title, description: desc})      
+                    }, 
+                    (error) => {
+                        console.log(error)
                     }
-                }, 
-                (error) => {
-                    console.log(error)
-                }
-            )
+                )
+            } else {
+                console.log('INTERNATIONAL')
+            }
         }
-    }, [city, isLoaded, results, cityCoordinates, APIKEY]);
-
-    // useEffect(() => {
-    //         if(isLoaded) {
-    //           const alertUrl = `https://api.openweathermap.org/data/2.5/onecall?lat=${cityCoordinates.lat}&lon=${cityCoordinates.lon}&exclude=&appid=${process.env.REACT_APP_APIKEY}`
-    //           fetch(alertUrl)
-    //           .then((res) => res.json())
-    //           .then(
-    //             (result) => {
-    //               if(result.alerts) {
-    //                 const rawDesciption = result.alerts[0].description
-    //                 const divisions = rawDesciption.split("*")
-    //                 const alertData = {}
-    //                 console.log(rawDesciption)
-    //                 divisions.forEach(element => {
-    //                   // const trimmed = element.trim()
-    //                   let newText = element.replace('...', ' ').replace(/\s+/g, ' ').trim()
-    //                   if(newText.startsWith('WHAT')) {
-    //                     newText = newText.replace('WHAT', '').trim()
-    //                     alertData.what = newText
-    //                   } else if(newText.startsWith('WHERE')) {
-    //                     newText = newText.replace('WHERE', '').trim()
-    //                     alertData.where = newText
-    //                   } else if(newText.startsWith('WHEN')) {
-    //                     newText = newText.replace('WHEN', '').trim()
-    //                     alertData.when = newText
-    //                   } else if(newText.startsWith('IMPACTS')) {
-    //                     newText = newText.replace('IMPACTS', '').trim()
-    //                     alertData.impacts = newText
-    //                   } else {
-    //                     const titles = newText.replaceAll('...', ' ').split('  ')
-    //                     titles.forEach((title, index) => {
-    //                       const newTitle = title.trim()
-    //                       titles[index] = newTitle
-    //                     });
-    //                     alertData.headlines = titles
-    //                   }
-    //                 });
-    //                 setAlerts(alertData)
-    //                 console.log(alertData)
-    //               } else {
-    //                 setAlerts(null)
-    //               }
-    //             },
-    //             (err) => {
-    //               console.log(err)
-    //             }
-    //           )
-    //         }
-    //   }, [isLoaded]); 
+    }, [city, isLoaded, results, cityCoordinates]);
 
   return (
       <>
         {isLoaded && alert !== null && alert !== undefined && (
             <>
-                <p>
-                    Alerts is working.
-                </p>
+                {alert.title !== undefined && alert.title !== null && (
+                    <>
+                        <p>
+                            {alert.title}
+                        </p>
+                    </>
+                )}
+                {alert.description!== undefined && alert.description !== null && (
+                    <>
+                        <p>
+                            {alert.description}
+                        </p>
+                    </>
+                )}
             </>
         )}
       </>
