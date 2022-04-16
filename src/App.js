@@ -5,11 +5,13 @@ import './App.css';
 import Navbar from './components/Navbar/navbar';
 import logo from './mlh-prep.png';
 import Search from './components/Navbar/Search';
+import Alert from './components/Alert';
 
 function App() {
   const [error, setError] = useState(null);
   const [isLoaded, setIsLoaded] = useState(false);
   const [city, setCity] = useState(null);
+  const [cityCoordinates, setCityCoordinates] = useState(null);
   const [results, setResults] = useState(null);
   const [cardBackground, setcardBackground] = useState('Clear');
   useEffect(() => {
@@ -23,6 +25,10 @@ function App() {
           } else {
             setIsLoaded(true);
             setResults(result);
+            setCityCoordinates({
+              lat: result.coord.lat,
+              lon: result.coord.lon,
+            });
             setcardBackground(result.weather[0].main);
           }
         },
@@ -92,6 +98,7 @@ function App() {
             </div>
             <div className="Map">
               <h2>Map goes here.</h2>
+              <Alert city={ city } isLoaded={ isLoaded } results={ results } cityCoordinates={ cityCoordinates } APIKEY={process.env.REACT_APP_APIKEY} />
             </div>
           </>
         )}
